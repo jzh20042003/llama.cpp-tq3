@@ -1,0 +1,25 @@
+name: Build Windows CUDA 12
+on: [workflow_dispatch] # 允许手动触发
+
+jobs:
+  build:
+    runs-on: windows-2022 # 使用微软提供的带 VS2022 的云服务器
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.14
+        with:
+          cuda: '12.2.0' # 指定安装 CUDA 12
+
+      - name: Configure and Build
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DGGML_CUDA=ON -DGGML_CUDA_FA=ON -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release -j 4
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: llama-cpp-tq3-windows-cuda
+          path: build/bin/Release/* # 将编译好的文件打包
