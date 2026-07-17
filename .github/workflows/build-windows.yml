@@ -1,17 +1,18 @@
 name: Build Windows CUDA 12
-on: [workflow_dispatch] # 允许手动触发
+on: [workflow_dispatch]
 
 jobs:
   build:
-    runs-on: windows-2022 # 使用微软提供的带 VS2022 的云服务器
+    runs-on: windows-2022
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Install CUDA Toolkit
-        uses: Jimver/cuda-toolkit@v0.2.14
+        uses: Jimver/cuda-toolkit@master # 升级到最新版，解决 Node 20 警告
         with:
-          cuda: '12.2.0' # 指定安装 CUDA 12
+          cuda: '12.2.0'
+          # 使用最新版插件可以尽量避免老版本遇到 GitHub 缓存服务波动时的崩溃
 
       - name: Configure and Build
         run: |
@@ -22,4 +23,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: llama-cpp-tq3-windows-cuda
-          path: build/bin/Release/* # 将编译好的文件打包
+          path: build/bin/Release/*
