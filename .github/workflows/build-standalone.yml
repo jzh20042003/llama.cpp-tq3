@@ -5,45 +5,56 @@ on:
 
 jobs:
   build-windows-cuda:
-    runs-on: windows-latest
+    runs-on: windows-2022 # 强制指定 Windows 2022 环境，确保 100% 存在 Visual Studio 2022
     steps:
       - name: 1. 拉取最新代码
         uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: 2. 安装 CUDA 12.4 编译环境 (已升级至最新版插件 v0.2.35)
+      - name: 2. 安装 CUDA 12.4 编译环境
         uses: Jimver/cuda-toolkit@v0.2.35
         id: cuda-toolkit
         with:
           cuda: '12.4.1'
 
-      - name: 3. 配置 CMake (关闭CURL彻底根除OpenSSL缺失问题)
+      - name: 3. 配置微软 MSBuild 编译链
+        uses: microsoft/setup-msbuild@v2
+
+      - name: 4. 配置 CMake (关闭CURL彻底根除OpenSSL缺失问题)
         run: |
-          mkdir build
-          cd build
-          cmake .. -G "Visual Studio 17 2022" -A x64 `
+          cmake -B build -S . -G "Visual Studio 17 2022" -A x64 `
             -DGGML_CUDA=ON `
             -DCMAKE_CUDA_ARCHITECTURES=89 `
             -DLLAMA_CURL=OFF `
             -DCMAKE_BUILD_TYPE=Release
 
-      - name: 4. 开始多核并行编译
+      - name: 5. 开始多核并行编译
         run: |
-          cd build
-          cmake --build . --config Release -j 4
+          cmake --build build --config Release -j 4
 
-      - name: 5. 自动打包所有必需的 DLL 和 EXE
+      - name: 6. 自动打包所有必需的 DLL 和 EXE (健壮版)
+        shell: powershell
         run: |
-          mkdir release_package
-          copy build\bin\Release\*.exe release_package\
-          copy build\bin\Release\*.dll release_package\
+          # 创建打包目录
+          New-Item -ItemType Directory -Force -Path release_package
+
+          # 安全复制编译出的 exe 文件
+          if (Test-Path "build\bin\Release\*.exe") {
+              Copy-Item "build\bin\Release\*.exe" -Destination release_package\
+          }
+          # 安全复制编译出的 dll 文件
+          if (Test-Path "build\bin\Release\*.dll") {
+              Copy-Item "build\bin\Release\*.dll" -Destination release_package\
+          }
+
+          # 提取并打包 CUDA 核心运行库 (彻底解决 cudart64_12.dll / cublas64_12.dll 缺失)
           $cuda_bin = "${{ steps.cuda-toolkit.outputs.CUDA_PATH }}\bin"
-          copy "$cuda_bin\cudart64_12.dll" release_package\
-          copy "$cuda_bin\cublas64_12.dll" release_package\
-          copy "$cuda_bin\cublasLt64_12.dll" release_package\
+          Copy-Item "$cuda_bin\cudart64_12.dll" -Destination release_package\
+          Copy-Item "$cuda_bin\cublas64_12.dll" -Destination release_package\
+          Copy-Item "$cuda_bin\cublasLt64_12.dll" -Destination release_package\
 
-      - name: 6. 上传最终绿色完整版
+      - name: 7. 上传最终绿色完整版
         uses: actions/upload-artifact@v4
         with:
           name: llama-cpp-TQ3-MTP-RTX4070TiSuper-Standalone
