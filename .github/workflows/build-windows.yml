@@ -1,4 +1,4 @@
-name: Build Windows CUDA 12
+name: Build Windows CUDA
 on: [workflow_dispatch]
 
 jobs:
@@ -9,10 +9,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install CUDA Toolkit
-        uses: Jimver/cuda-toolkit@master # 升级到最新版，解决 Node 20 警告
+        uses: Jimver/cuda-toolkit@master
         with:
-          cuda: '12.2.0'
-          # 使用最新版插件可以尽量避免老版本遇到 GitHub 缓存服务波动时的崩溃
+          cuda: '12.4.1' # <--- 就是这里，升级到 12.4.1 以满足微软的新要求
 
       - name: Configure and Build
         run: |
