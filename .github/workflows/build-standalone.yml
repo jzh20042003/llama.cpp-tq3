@@ -1,19 +1,19 @@
 name: Build Standalone llama.cpp (RTX 4070 Ti Super)
 
 on:
-  workflow_dispatch: # 允许手动点击按钮触发编译
+  workflow_dispatch:
 
 jobs:
   build-windows-cuda:
     runs-on: windows-latest
     steps:
-      - name: 1. 拉取最新代码 (包含修复Bug的最新提交)
+      - name: 1. 拉取最新代码
         uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: 2. 安装 CUDA 12.4 编译环境
-        uses: Jimver/cuda-toolkit@v0.2.14
+      - name: 2. 安装 CUDA 12.4 编译环境 (已升级至最新版插件 v0.2.35)
+        uses: Jimver/cuda-toolkit@v0.2.35
         id: cuda-toolkit
         with:
           cuda: '12.4.1'
@@ -27,9 +27,6 @@ jobs:
             -DCMAKE_CUDA_ARCHITECTURES=89 `
             -DLLAMA_CURL=OFF `
             -DCMAKE_BUILD_TYPE=Release
-        # 解析：
-        # ARCHITECTURES=89 是 4070Ti Super 的专属架构，性能最高。
-        # LLAMA_CURL=OFF 直接砍掉网络下载功能，彻底告别 libssl-3-x64.dll 和 libcrypto-3-x64.dll 报错！
 
       - name: 4. 开始多核并行编译
         run: |
@@ -39,10 +36,8 @@ jobs:
       - name: 5. 自动打包所有必需的 DLL 和 EXE
         run: |
           mkdir release_package
-          # 复制编译好的主程序
           copy build\bin\Release\*.exe release_package\
           copy build\bin\Release\*.dll release_package\
-          # 提取 CUDA 核心运行库 (解决 cudart64_12.dll / cublas64_12.dll 缺失)
           $cuda_bin = "${{ steps.cuda-toolkit.outputs.CUDA_PATH }}\bin"
           copy "$cuda_bin\cudart64_12.dll" release_package\
           copy "$cuda_bin\cublas64_12.dll" release_package\
