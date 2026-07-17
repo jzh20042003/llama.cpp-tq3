@@ -11,7 +11,7 @@ jobs:
       - name: Install CUDA Toolkit
         uses: Jimver/cuda-toolkit@master
         with:
-          cuda: '12.4.1'
+          cuda: '12.5.1'
 
       - name: Configure CMake (彻底关闭联网依赖，打造纯净版)
         continue-on-error: true
@@ -22,9 +22,9 @@ jobs:
       - name: Bundle NVIDIA CUDA DLLs (强行提取 100% 匹配的官方运行库)
         continue-on-error: true
         run: |
-          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\cudart64_*.dll" -Destination "build\bin\Release\"
-          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\cublas64_*.dll" -Destination "build\bin\Release\"
-          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.4\bin\cublasLt64_*.dll" -Destination "build\bin\Release\"
+          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.5\bin\cudart64_*.dll" -Destination "build\bin\Release\"
+          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.5\bin\cublas64_*.dll" -Destination "build\bin\Release\"
+          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.5\bin\cublasLt64_*.dll" -Destination "build\bin\Release\"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
