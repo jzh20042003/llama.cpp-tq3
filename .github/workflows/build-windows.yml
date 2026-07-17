@@ -8,23 +8,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install CUDA Toolkit
+      - name: Install CUDA Toolkit 12.5.1
+        id: cuda-toolkit
         uses: Jimver/cuda-toolkit@master
         with:
-          cuda: '12.5.1'
+          cuda: '12.5.1' 
 
-      - name: Configure CMake (彻底关闭联网依赖，打造纯净版)
+      - name: Configure CMake (注入 4070 Ti Super 灵魂！)
         continue-on-error: true
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A x64 -DGGML_CUDA=ON -DGGML_CUDA_FA=ON -DLLAMA_CURL=OFF -DCMAKE_BUILD_TYPE=Release
+          # 核心改动：加入了 -DCMAKE_CUDA_ARCHITECTURES=89，生成纯正的 Ada 架构机器码
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DGGML_CUDA=ON -DGGML_CUDA_FA=ON -DLLAMA_CURL=OFF -DCMAKE_CUDA_ARCHITECTURES=89 -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release -j 4
 
-      - name: Bundle NVIDIA CUDA DLLs (强行提取 100% 匹配的官方运行库)
+      - name: Bundle NVIDIA CUDA DLLs
         continue-on-error: true
         run: |
-          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.5\bin\cudart64_*.dll" -Destination "build\bin\Release\"
-          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.5\bin\cublas64_*.dll" -Destination "build\bin\Release\"
-          Copy-Item "C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.5\bin\cublasLt64_*.dll" -Destination "build\bin\Release\"
+          $cuda_bin = "${{ steps.cuda-toolkit.outputs.CUDA_PATH }}\bin"
+          Copy-Item "$cuda_bin\cudart64_*.dll" -Destination "build\bin\Release\"
+          Copy-Item "$cuda_bin\cublas64_*.dll" -Destination "build\bin\Release\"
+          Copy-Item "$cuda_bin\cublasLt64_*.dll" -Destination "build\bin\Release\"
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
