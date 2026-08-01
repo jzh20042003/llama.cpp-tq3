@@ -9,7 +9,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'turbo-tan/llama.cpp-tq3'
-          ref: 'master' # 核心改动：指向已经合并修复的 master 分支
+          ref: 'main' # 核心改动：指向已经合并修复的 main 分支
           submodules: 'recursive'
           fetch-depth: 0
 
